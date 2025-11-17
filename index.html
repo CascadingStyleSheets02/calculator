@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .calculator {
+            background: #2d3748;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 320px;
+        }
+
+        .display {
+            background: #1a202c;
+            color: #fff;
+            font-size: 2.5rem;
+            padding: 20px;
+            text-align: right;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            min-height: 80px;
+            word-wrap: break-word;
+            word-break: break-all;
+            overflow-y: auto;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 20px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .number {
+            background: #4a5568;
+            color: #fff;
+        }
+
+        .number:hover {
+            background: #5a6678;
+        }
+
+        .operator {
+            background: #ed8936;
+            color: #fff;
+        }
+
+        .operator:hover {
+            background: #f59e4a;
+        }
+
+        .operator.active {
+            background: #ffa500;
+        }
+
+        .equals {
+            background: #48bb78;
+            color: #fff;
+        }
+
+        .equals:hover {
+            background: #5cd492;
+        }
+
+        .clear {
+            background: #f56565;
+            color: #fff;
+            grid-column: span 2;
+        }
+
+        .clear:hover {
+            background: #fc7e7e;
+        }
+
+        .backspace {
+            background: #ed8936;
+            color: #fff;
+        }
+
+        .backspace:hover {
+            background: #f59e4a;
+        }
+
+        .error {
+            color: #fc8181;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="clear" onclick="clearCalculator()">CLEAR</button>
+            <button class="operator" onclick="handleOperator('/')">/</button>
+            <button class="operator" onclick="handleOperator('*')">×</button>
+            
+            <button class="number" onclick="handleNumber('7')">7</button>
+            <button class="number" onclick="handleNumber('8')">8</button>
+            <button class="number" onclick="handleNumber('9')">9</button>
+            <button class="operator" onclick="handleOperator('-')">-</button>
+            
+            <button class="number" onclick="handleNumber('4')">4</button>
+            <button class="number" onclick="handleNumber('5')">5</button>
+            <button class="number" onclick="handleNumber('6')">6</button>
+            <button class="operator" onclick="handleOperator('+')">+</button>
+            
+            <button class="number" onclick="handleNumber('1')">1</button>
+            <button class="number" onclick="handleNumber('2')">2</button>
+            <button class="number" onclick="handleNumber('3')">3</button>
+            <button class="backspace" onclick="backspace()">←</button>
+            
+            <button class="number" onclick="handleNumber('0')">0</button>
+            <button class="number" onclick="handleNumber('.')">.</button>
+            <button class="equals" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <script>
+        // Basic math operator functions
+        function add(a, b) {
+            return a + b;
+        }
+
+        function subtract(a, b) {
+            return a - b;
+        }
+
+        function multiply(a, b) {
+            return a * b;
+        }
+
+        function divide(a, b) {
+            if (b === 0) {
+                return "Nice try, genius! 🙄";
+            }
+            return a / b;
+        }
+
+        // Operate function that calls the appropriate math function
+        function operate(operator, a, b) {
+            a = parseFloat(a);
+            b = parseFloat(b);
+            
+            switch(operator) {
+                case '+':
+                    return add(a, b);
+                case '-':
+                    return subtract(a, b);
+                case '*':
+                    return multiply(a, b);
+                case '/':
+                    return divide(a, b);
+                default:
+                    return null;
+            }
+        }
+
+        // Calculator state variables
+        let firstNumber = '';
+        let secondNumber = '';
+        let currentOperator = null;
+        let shouldResetDisplay = false;
+
+        const display = document.getElementById('display');
+
+        // Handle number button clicks
+        function handleNumber(num) {
+            // If we just calculated a result, start fresh
+            if (shouldResetDisplay) {
+                display.textContent = '';
+                shouldResetDisplay = false;
+            }
+
+            // Prevent multiple decimal points
+            if (num === '.' && display.textContent.includes('.')) {
+                return;
+            }
+
+            // Replace initial 0 or append to display
+            if (display.textContent === '0' && num !== '.') {
+                display.textContent = num;
+            } else {
+                display.textContent += num;
+            }
+        }
+
+        // Handle operator button clicks
+        function handleOperator(operator) {
+            const currentValue = display.textContent;
+            
+            // Don't do anything if display shows an error
+            if (typeof currentValue === 'string' && currentValue.includes('genius')) {
+                return;
+            }
+
+            // If we have a first number and operator, and we've entered a second number
+            if (firstNumber && currentOperator && !shouldResetDisplay) {
+                secondNumber = currentValue;
+                const result = operate(currentOperator, firstNumber, secondNumber);
+                
+                if (typeof result === 'string') {
+                    display.textContent = result;
+                    display.classList.add('error');
+                    firstNumber = '';
+                    currentOperator = null;
+                    shouldResetDisplay = true;
+                    return;
+                }
+                
+                // Round long decimals
+                const roundedResult = Math.round(result * 100000000) / 100000000;
+                display.textContent = roundedResult;
+                firstNumber = roundedResult.toString();
+            } else {
+                // Store the first number
+                firstNumber = currentValue;
+            }
+
+            // Update operator visual feedback
+            document.querySelectorAll('.operator').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            currentOperator = operator;
+            shouldResetDisplay = true;
+        }
+
+        // Handle equals button click
+        function calculate() {
+            // Don't calculate if we don't have all required values
+            if (!firstNumber || !currentOperator) {
+                return;
+            }
+
+            // Don't calculate if display shows an error
+            if (typeof display.textContent === 'string' && display.textContent.includes('genius')) {
+                return;
+            }
+
+            secondNumber = display.textContent;
+            const result = operate(currentOperator, firstNumber, secondNumber);
+            
+            // Handle division by zero
+            if (typeof result === 'string') {
+                display.textContent = result;
+                display.classList.add('error');
+            } else {
+                // Round long decimals to prevent overflow
+                const roundedResult = Math.round(result * 100000000) / 100000000;
+                display.textContent = roundedResult;
+            }
+
+            // Remove operator visual feedback
+            document.querySelectorAll('.operator').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Reset state for next calculation
+            firstNumber = '';
+            secondNumber = '';
+            currentOperator = null;
+            shouldResetDisplay = true;
+        }
+
+        // Clear calculator
+        function clearCalculator() {
+            display.textContent = '0';
+            display.classList.remove('error');
+            firstNumber = '';
+            secondNumber = '';
+            currentOperator = null;
+            shouldResetDisplay = false;
+            
+            // Remove operator visual feedback
+            document.querySelectorAll('.operator').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(e) {
+            if (e.key >= 0 && e.key <= 9) handleNumber(e.key);
+            if (e.key === '.') handleNumber(e.key);
+            if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') handleOperator(e.key);
+            if (e.key === 'Enter' || e.key === '=') calculate();
+            if (e.key === 'Escape') clearCalculator();
+            if (e.key === 'Backspace') backspace();
+        });
+
+        // Backspace function
+        function backspace() {
+            // Don't backspace on error messages
+            if (typeof display.textContent === 'string' && display.textContent.includes('genius')) {
+                return;
+            }
+
+            // Don't backspace if we should reset display
+            if (shouldResetDisplay) {
+                return;
+            }
+
+            const currentDisplay = display.textContent;
+            
+            // If only one character or just "0", reset to "0"
+            if (currentDisplay.length <= 1) {
+                display.textContent = '0';
+            } else {
+                // Remove last character
+                display.textContent = currentDisplay.slice(0, -1);
+            }
+        }
+    </script>
+</body>
+</html>
